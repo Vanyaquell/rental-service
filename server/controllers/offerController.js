@@ -94,4 +94,39 @@ export async function createOffer(req, res, next) {
     }
 }
 
-export { getAllOffers, getFullOffer };
+async function getFavoriteOffers(req, res, next) {
+    try {
+        const favoriteOffers = await Offer.findAll({
+            where: { isFavorite: true }
+        });
+
+        const adaptedOffers = favoriteOffers.map(adaptOfferToClient);
+
+        res.status(200).json(adaptedOffers);
+    } catch (error) {
+        console.error('Не удалось получить избранные предложения', error);
+        next(ApiError.internal('Не удалось получить избранные предложения: ' + error.message));
+    }
+}
+
+const toggleFavorite = async (req, res, next) => {
+    try {
+        const { offerId, status } = req.params;
+
+        const offer = await Offer.findByPk(offerId);
+
+        if (!offer) {
+            return next(ApiError.badRequest('Предложение не найдено'));
+        }
+
+        offer.isFavorite = status === '1';
+        await offer.save();
+
+        res.json(offer);
+    } catch (error) {
+        console.error(error);
+        next(ApiError.internal('Ошибка при обновлении статуса избранного'));
+    }
+};
+
+export { getAllOffers, getFullOffer, getFavoriteOffers, toggleFavorite };
