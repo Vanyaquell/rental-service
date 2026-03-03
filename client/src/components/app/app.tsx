@@ -8,7 +8,8 @@ import { NotFound } from "../not-found/not-found.tsx";
 import { PrivateRoute } from "../private-route/private-route.tsx";
 import type { FullOffer, OffersList } from "../../types/offers.ts";
 import type { ReviewType } from "../../types/reviews.ts";
-
+import { useAppSelector } from "../../hooks/index.ts";
+import { LoadingPage } from "../loading-page/loading-page.tsx";
 
 
 
@@ -20,6 +21,14 @@ type AppMainPageProps = {
 }
 
 function App({ rentalOffersCount, offers, offersList, reviews }: AppMainPageProps) {
+    const authorizationStatus = useAppSelector((state) => state.authorizationStatus);
+    const isOffersDataLoading = useAppSelector((state) => state.isOffersDataLoading);
+
+    if (authorizationStatus === AuthorizationStatus.UnknownAuth || isOffersDataLoading) {
+        return (
+            <LoadingPage />
+        );
+    }
     return (
         <BrowserRouter>
             <Routes>
@@ -30,7 +39,7 @@ function App({ rentalOffersCount, offers, offersList, reviews }: AppMainPageProp
                 <Route path={`${AppRoute.Offer}/:id`} element={<OfferPage offers={offers} reviews={reviews} />} />
                 <Route path="*" element={<NotFound />} />
                 <Route path={AppRoute.Favorites} element={
-                    <PrivateRoute authorizationStatus={AuthorizationStatus.Auth}>
+                    <PrivateRoute authorizationStatus={authorizationStatus}>
                         <FavoritesPages offersList={offersList} />
                     </PrivateRoute>
                 } />

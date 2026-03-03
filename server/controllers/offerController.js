@@ -2,6 +2,8 @@ import { Offer } from "../models/offer.js";
 import { User } from "../models/user.js";
 import { adaptOfferToClient, adaptFullOfferToClient } from "../adapters/offerAdapter.js";
 import ApiError from "../error/ApiError.js";
+import fs from 'fs';
+import path from 'path';
 
 async function getAllOffers(req, res, next) {
     try {
@@ -41,11 +43,26 @@ async function getFullOffer(req, res, next) {
 
 export async function createOffer(req, res, next) {
     try {
+        let offerData = { ...req.body };
+
+        if (req.body.json) {
+            try {
+                const parsedJson = JSON.parse(req.body.json);
+                offerData = { ...offerData, ...parsedJson };
+            } catch (e) {
+                return next(ApiError.badRequest('Неверный формат JSON в поле json'));
+            }
+        }
+
         const {
             title, description, publishDate, city,
             isPremium, isFavorite, rating, type, rooms, guests, price,
             features, commentsCount, latitude, longitude, userId
-        } = req.body;
+        } = offerData;
+
+        if (!title || !description || !city || !type || !price || !userId) {
+            return next(ApiError.badRequest('Отсутствуют обязательные поля'));
+        }
 
         if (!req.files?.previewImage || req.files.previewImage.length === 0) {
             return next(ApiError.badRequest('Превью изображение обязательно для загрузки'));
@@ -70,26 +87,27 @@ export async function createOffer(req, res, next) {
         const offer = await Offer.create({
             title,
             description,
-            publishDate,
+            publishDate: publishDate || new Date(),
             city,
             previewImage: previewImagePath,
             photos: processedPhotos,
-            isPremium,
-            isFavorite,
-            rating,
+            isPremium: isPremium === 'true' || isPremium === true,
+            isFavorite: isFavorite === 'true' || isFavorite === true,
+            rating: parseFloat(rating),
             type,
-            rooms,
-            guests,
-            price,
+            rooms: parseInt(rooms),
+            guests: parseInt(guests),
+            price: parseInt(price),
             features: parsedFeatures,
-            commentsCount,
-            latitude,
-            longitude,
+            commentsCount: commentsCount || 0,
+            latitude: parseFloat(latitude),
+            longitude: parseFloat(longitude),
             authorId: userId
         });
 
         return res.status(201).json(offer);
     } catch (error) {
+        console.error('Ошибка создания предложения:', error);
         next(ApiError.internal('Не удалось добавить предложение: ' + error.message));
     }
 }

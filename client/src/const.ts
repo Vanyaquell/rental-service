@@ -64,9 +64,18 @@ const SortOffersType = {
     TopRated: 'Top rated first',
 };
 
+const APIRoute = {
+    Offers: '/offers',
+    Login: '/login',
+    Logout: '/logout',
+};
+const TIMEOUT_SHOW_ERROR = 2000;
+
 
 export { SortOffersType };
 export { CITIES_LOCATION }
 export { Setting };
 export { AppRoute };
 export { AuthorizationStatus };
+export { APIRoute };
+export { TIMEOUT_SHOW_ERROR };
