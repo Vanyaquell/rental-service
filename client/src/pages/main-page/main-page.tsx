@@ -6,13 +6,15 @@ import { useEffect, useState } from "react";
 import Map from "../../components/map/map.tsx"
 import type { City, Point } from "../../types/city.ts";
 import { CitiesList } from "../../components/cities-list/cities-list.tsx";
-import { useAppSelector } from "../../hooks";
+import { useAppSelector, useAppDispatch } from "../../hooks";
 import { getOffersByCity, sortOffersByType } from "../../util.ts";
 import type { SortOffer } from "../../types/sort.ts";
 import { SortOptions } from "../../components/sort-options/sort-options.tsx";
-import { AppRoute } from "../../const.ts";
+import { AppRoute, AuthorizationStatus } from "../../const.ts";
 import { Link } from "react-router-dom";
+import { logoutAction } from "../../store/api-action";
 
+const BASE_URL = 'http://localhost:5000';
 
 type MainPageProps = {
     rentalOffersCount: number;
@@ -20,15 +22,21 @@ type MainPageProps = {
 }
 
 function MainPage({ offersList }: MainPageProps) {
-
+    const dispatch = useAppDispatch();
     const favoritesCount = offersList.filter(offer => offer.isFavorite).length;
 
+    const authorizationStatus = useAppSelector((state) => state.authorizationStatus);
+    const userEmail = useAppSelector((state) => state.userEmail);
     const selectedCity = useAppSelector((state) => state.city);
     const offersListSelector = useAppSelector((state) => state.offers);
-    const selectedCityOffers = getOffersByCity(selectedCity?.title, offersListSelector);
-    const rentalOffersCount = selectedCityOffers.length;
-    const [activeSort, setActiveSort] = useState<SortOffer>('Popular')
 
+    const selectedCityOffers = selectedCity?.title
+        ? getOffersByCity(selectedCity.title, offersListSelector)
+        : [];
+
+    const rentalOffersCount = selectedCityOffers.length;
+
+    const [activeSort, setActiveSort] = useState<SortOffer>('Popular')
     const [selectedPoint, setSelectedPoint] = useState<Point | undefined>(undefined);
     const [city, setCity] = useState<City | null>(null);
     const [cityPoints, setCityPoints] = useState<Point[]>([]);
@@ -48,6 +56,9 @@ function MainPage({ offersList }: MainPageProps) {
                 lng: offer.location.longitude,
             }));
             setCityPoints(points);
+        } else {
+            setCity(null);
+            setCityPoints([]);
         }
     }, [selectedCity, offersListSelector]);
 
@@ -63,6 +74,12 @@ function MainPage({ offersList }: MainPageProps) {
         setSelectedPoint(undefined);
     };
 
+    const handleLogout = () => {
+        dispatch(logoutAction());
+    };
+
+    const isAuth = authorizationStatus === AuthorizationStatus.Auth;
+
     return (
         <div className="page page--gray page--main">
             <header className="header">
@@ -73,19 +90,48 @@ function MainPage({ offersList }: MainPageProps) {
                         </div>
                         <nav className="header__nav">
                             <ul className="header__nav-list">
-                                <li className="header__nav-item user">
-                                    <Link to={`${AppRoute.Favorites}`} className="header__nav-link header__nav-link--profile" href="#">
-                                        <div className="header__avatar-wrapper user__avatar-wrapper">
-                                        </div>
-                                        <span className="header__user-name user__name">Myemail@gmail.com</span>
-                                        <span className="header__favorite-count">{favoritesCount}</span>
-                                    </Link>
-                                </li>
-                                <li className="header__nav-item">
-                                    <a className="header__nav-link" href="#">
-                                        <span className="header__signout">Sign out</span>
-                                    </a>
-                                </li>
+                                {isAuth ? (
+                                    <>
+                                        <li className="header__nav-item user">
+                                            <Link
+                                                to={AppRoute.Favorites}
+                                                className="header__nav-link header__nav-link--profile"
+                                            >
+                                                <div className="header__avatar-wrapper user__avatar-wrapper">
+                                                </div>
+                                                <span className="header__user-name user__name">
+                                                    {userEmail || 'user@example.com'}
+                                                </span>
+                                                <span className="header__favorite-count">
+                                                    {offersList.filter(o => o.isFavorite).length}
+                                                </span>
+                                            </Link>
+                                        </li>
+                                        <li className="header__nav-item">
+                                            <a
+                                                className="header__nav-link"
+                                                href="#"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handleLogout();
+                                                }}
+                                            >
+                                                <span className="header__signout">Sign out</span>
+                                            </a>
+                                        </li>
+                                    </>
+                                ) : (
+                                    <li className="header__nav-item user">
+                                        <Link
+                                            to={AppRoute.Login}
+                                            className="header__nav-link header__nav-link--profile"
+                                        >
+                                            <div className="header__avatar-wrapper user__avatar-wrapper">
+                                            </div>
+                                            <span className="header__login">Sign in</span>
+                                        </Link>
+                                    </li>
+                                )}
                             </ul>
                         </nav>
                     </div>
@@ -103,7 +149,11 @@ function MainPage({ offersList }: MainPageProps) {
                     <div className="cities__places-container container">
                         <section className="cities__places places">
                             <h2 className="visually-hidden">Places</h2>
-                            <b className="places__found">{rentalOffersCount} places to stay in {selectedCity?.title}</b>
+                            <b className="places__found">
+                                {selectedCity?.title
+                                    ? `${rentalOffersCount} places to stay in ${selectedCity.title}`
+                                    : 'No city selected'}
+                            </b>
                             <SortOptions activeSorting={activeSort} onChange={(newSorting) => setActiveSort(newSorting)} />
                             <CitiesCardList
                                 offersList={sortOffersByType(selectedCityOffers, activeSort)}

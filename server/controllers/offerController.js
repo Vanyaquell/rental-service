@@ -147,4 +147,31 @@ const toggleFavorite = async (req, res, next) => {
     }
 };
 
+export const initializeRatings = async (req, res, next) => {
+    try {
+        const offers = await Offer.findAll();
+
+        for (const offer of offers) {
+            const reviews = await Review.findAll({
+                where: { OfferId: offer.id },
+                attributes: ['rating']
+            });
+
+            if (reviews.length === 0) {
+                offer.rating = 0;
+            } else {
+                const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+                const averageRating = totalRating / reviews.length;
+                offer.rating = Math.round(averageRating * 10) / 10;
+            }
+
+            await offer.save();
+        }
+
+        res.json({ message: 'Все рейтинги обновлены' });
+    } catch (error) {
+        next(ApiError.internal('Ошибка при обновлении рейтингов'));
+    }
+};
+
 export { getAllOffers, getFullOffer, getFavoriteOffers, toggleFavorite };

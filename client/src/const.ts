@@ -68,6 +68,8 @@ const APIRoute = {
     Offers: '/offers',
     Login: '/login',
     Logout: '/logout',
+    Comments: '/comments',
+    Favorite: '/favorite',
 };
 const TIMEOUT_SHOW_ERROR = 2000;
 

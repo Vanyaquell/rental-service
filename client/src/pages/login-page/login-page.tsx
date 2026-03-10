@@ -3,7 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { useRef } from 'react';
 import type { FormEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { loginAction } from '../../store/api-action.ts';
+import { loginAction } from '../../store/api-action';
 import { AppRoute, AuthorizationStatus } from '../../const';
 import type { AuthData } from '../../types/user-data';
 import { getAuthorizationStatus } from '../../store/selectors';

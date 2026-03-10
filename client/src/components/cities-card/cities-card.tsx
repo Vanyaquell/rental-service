@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { AppRoute } from "../../const.ts";
-import type { FullOffer } from "../../types/offers.ts";
+import { useFavorite } from "../../hooks/use-favorite";
+import { useAppSelector } from "../../hooks";
+import { AuthorizationStatus } from "../../const";
 
 type CitiesCardProps = {
     id: string;
@@ -28,23 +30,34 @@ function CitiesCard({
     isNearby = false,
     onMouseOver,
     onMouseOut,
-    isFavorite
+    isFavorite: initialIsFavorite
 }: CitiesCardProps) {
-    const [, setActiveOfferId] = useState('');
+    const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+    const [isToggling, setIsToggling] = useState(false);
+    const { toggleFavorite } = useFavorite();
+    const authorizationStatus = useAppSelector((state) => state.authorizationStatus);
+    const isAuth = authorizationStatus === AuthorizationStatus.Auth;
 
-    const handleMouseOver = () => {
-        setActiveOfferId(id);
-        if (onMouseOver) {
-            onMouseOver(id);
-        }
-    };
+    const handleFavoriteClick = useCallback(async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-    const handleMouseOut = () => {
-        setActiveOfferId('');
-        if (onMouseOut) {
-            onMouseOut();
+        if (!isAuth) {
+            window.location.href = AppRoute.Login;
+            return;
         }
-    };
+
+        if (isToggling) return;
+
+        setIsToggling(true);
+        const success = await toggleFavorite(id, isFavorite);
+
+        if (success) {
+            setIsFavorite(!isFavorite);
+        }
+
+        setIsToggling(false);
+    }, [id, isFavorite, isToggling, toggleFavorite, isAuth]);
 
     const imageWrapperClass = isNearby
         ? "near-places__image-wrapper place-card__image-wrapper"
@@ -57,8 +70,8 @@ function CitiesCard({
     return (
         <article
             className={articleClass}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
+            onMouseOver={() => onMouseOver?.(id)}
+            onMouseOut={onMouseOut}
         >
             {isPremium && (
                 <div className="place-card__mark">
@@ -83,14 +96,19 @@ function CitiesCard({
                         <b className="place-card__price-value">&euro;{price}</b>
                         <span className="place-card__price-text">&#47;&nbsp;night</span>
                     </div>
-                    <button className={`place-card__bookmark-button ${isFavorite ? "place-card__bookmark-button--active" : ''} button`} type="button">
-                        {isFavorite ? <svg className="place-card__bookmark-icon" width="18" height="19">
+                    <button
+                        className={`place-card__bookmark-button button ${isFavorite ? "place-card__bookmark-button--active" : ""
+                            }`}
+                        type="button"
+                        onClick={handleFavoriteClick}
+                        disabled={isToggling}
+                    >
+                        <svg className="place-card__bookmark-icon" width="18" height="19">
                             <use href="/img/sprite.svg#icon-bookmark"></use>
-                        </svg> : <svg className="place-card__bookmark-icon" width="18" height="19">
-                            <use href="/img/sprite.svg#icon-bookmark"></use>
-                        </svg>}
-
-                        <span className="visually-hidden">To bookmarks</span>
+                        </svg>
+                        <span className="visually-hidden">
+                            {isFavorite ? "In bookmarks" : "To bookmarks"}
+                        </span>
                     </button>
                 </div>
                 <div className="place-card__rating rating">

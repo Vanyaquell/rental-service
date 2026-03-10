@@ -31,6 +31,8 @@ export type FullOffer = {
     host: HostOffer;
     images: string[];
     maxAdults: number;
+    photos?: string[];
+    features?: string[];
 };
 
 export type OffersList = {

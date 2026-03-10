@@ -1,0 +1,43 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.page__main {
+    flex: 1 0 auto;
+}
+
+.page__main--favorites {
+    flex: 1 0 auto;
+}
+
+.page--favorites-empty {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.page--favorites-empty .page__main--favorites-empty {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.page--favorites-empty .page__favorites-container {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.page--favorites-empty .favorites--empty {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.footer {
+    flex-shrink: 0;
+    width: 100%;
+}

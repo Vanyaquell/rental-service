@@ -1,14 +1,19 @@
 import { createReducer } from '@reduxjs/toolkit';
-import { mapFullOffersToOffersList } from '../mocks/offers-list';
-import { changeCity, offersCityList, requireAuthorization, setError, setOffersDataLoadingStatus } from './action.ts';
-import { offers } from "../mocks/offers.ts";
-import { AuthorizationStatus, CITIES_LOCATION } from "../const.ts";
-import { getCity } from "../util.ts";
-import type { City } from '../types/city.ts';
-import type { OffersList, CityOffer } from '../types/offers.ts';
-import type { AuthorizationStatusType } from '../types/authorization-status.ts';
+import { changeCity, offersCityList, requireAuthorization, setError, setOffersDataLoadingStatus, setUserEmail, setCurrentOffer, setCurrentOfferReviews, setCurrentOfferLoadingStatus, setCurrentOfferError } from './action';
+import { AuthorizationStatus, CITIES_LOCATION } from "../const";
+import { getCity } from "../util";
+import type { City } from '../types/city';
+import type { OffersList } from '../types/offers';
+import type { FullOffer } from '../types/offers';
+import type { ReviewType } from '../types/reviews';
+import type { AuthorizationStatusType } from '../types/authorization-status';
 
 const defaultCity = getCity('Paris', CITIES_LOCATION);
+
+const token = localStorage.getItem('rent-service-token');
+const initialAuthStatus = token
+    ? AuthorizationStatus.UnknownAuth
+    : AuthorizationStatus.NoAuth;
 
 export type InitialState = {
     city: City | undefined;
@@ -16,13 +21,24 @@ export type InitialState = {
     authorizationStatus: AuthorizationStatusType;
     error: string | null;
     isOffersDataLoading: boolean;
+    userEmail: string | null;
+    currentOffer: FullOffer | null;
+    currentOfferReviews: ReviewType[];
+    isCurrentOfferLoading: boolean;
+    currentOfferError: string | null;
 }
+
 const initialState: InitialState = {
     city: defaultCity,
     offers: [],
-    authorizationStatus: AuthorizationStatus.UnknownAuth,
+    authorizationStatus: initialAuthStatus,
     error: null,
     isOffersDataLoading: false,
+    userEmail: null,
+    currentOffer: null,
+    currentOfferReviews: [],
+    isCurrentOfferLoading: false,
+    currentOfferError: null,
 };
 
 const reducer = createReducer(initialState, (builder) => {
@@ -42,7 +58,21 @@ const reducer = createReducer(initialState, (builder) => {
         .addCase(setOffersDataLoadingStatus, (state, action) => {
             state.isOffersDataLoading = action.payload;
         })
-
+        .addCase(setUserEmail, (state, action) => {
+            state.userEmail = action.payload;
+        })
+        .addCase(setCurrentOffer, (state, action) => {
+            state.currentOffer = action.payload;
+        })
+        .addCase(setCurrentOfferReviews, (state, action) => {
+            state.currentOfferReviews = action.payload;
+        })
+        .addCase(setCurrentOfferLoadingStatus, (state, action) => {
+            state.isCurrentOfferLoading = action.payload;
+        })
+        .addCase(setCurrentOfferError, (state, action) => {
+            state.currentOfferError = action.payload;
+        });
 });
 
 export { reducer };

@@ -1,7 +1,8 @@
 import { createAction } from '@reduxjs/toolkit';
 import type { OffersList } from '../types/offers';
 import type { City } from "../types/city.ts";
-import type { CityOffer } from '../types/offers';
+import type { FullOffer } from '../types/offers';
+import type { ReviewType } from '../types/reviews';
 import { AuthorizationStatus } from '../const.ts';
 import type { AuthorizationStatusType } from '../types/authorization-status.ts';
 
@@ -18,6 +19,28 @@ const offersCityList = createAction('offers/offersCityList', (offers: OffersList
 const setError = createAction('setError', (error: string | null) => ({
     payload: error
 }));
+
 const setOffersDataLoadingStatus = createAction<boolean>('data/setOffersDataLoadingStatus');
 
-export { changeCity, offersCityList, requireAuthorization, setError, setOffersDataLoadingStatus };
+const setUserEmail = createAction<string | null>('user/setUserEmail');
+
+const setCurrentOffer = createAction<FullOffer | null>('offer/setCurrentOffer');
+
+const setCurrentOfferReviews = createAction<ReviewType[]>('offer/setCurrentOfferReviews');
+
+const setCurrentOfferLoadingStatus = createAction<boolean>('offer/setCurrentOfferLoadingStatus');
+
+const setCurrentOfferError = createAction<string | null>('offer/setCurrentOfferError');
+
+export {
+    changeCity,
+    offersCityList,
+    requireAuthorization,
+    setError,
+    setOffersDataLoadingStatus,
+    setUserEmail,
+    setCurrentOffer,
+    setCurrentOfferReviews,
+    setCurrentOfferLoadingStatus,
+    setCurrentOfferError
+};

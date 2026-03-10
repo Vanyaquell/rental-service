@@ -24,8 +24,9 @@ User.init({
     password: {
         type: DataTypes.STRING,
         allowNull: false,
-
-
+        validate: {
+            len: [6, 12]
+        }
     },
     userType: {
         type: DataTypes.ENUM,

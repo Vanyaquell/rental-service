@@ -1,10 +1,7 @@
 import axios from 'axios';
-import type { AxiosInstance } from 'axios';
-import type { InternalAxiosRequestConfig } from 'axios';
-import type { AxiosError } from 'axios';
+import type { AxiosInstance, InternalAxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
 import { StatusCodes } from 'http-status-codes';
 import { processErrorHandle } from './process-error-handle';
-import type { AxiosResponse } from 'axios';
 import { getToken } from './token';
 
 type DetailMessageType = {
@@ -14,8 +11,8 @@ type DetailMessageType = {
 
 const StatusCodeMapping: Record<number, boolean> = {
     [StatusCodes.BAD_REQUEST]: true,
-    [StatusCodes.UNAUTHORIZED]: true,
-    [StatusCodes.NOT_FOUND]: true
+    [StatusCodes.NOT_FOUND]: true,
+    [StatusCodes.INTERNAL_SERVER_ERROR]: true,
 };
 
 const shouldDisplayError = (response: AxiosResponse) => !!StatusCodeMapping[response.status];
@@ -32,9 +29,10 @@ export const createAPI = (): AxiosInstance => {
         (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
             const token = getToken();
 
-            if (token) {
-                config.headers = config.headers || {};
+
+            if (token && config.headers) {
                 config.headers['x-token'] = token;
+                config.headers['Authorization'] = `Bearer ${token}`;
             }
 
             return config;
@@ -43,22 +41,18 @@ export const createAPI = (): AxiosInstance => {
             return Promise.reject(error);
         }
     );
+
     api.interceptors.response.use(
         (response) => response,
         (error: AxiosError<DetailMessageType>) => {
             if (error.response && shouldDisplayError(error.response)) {
-                const detailMessage = (error.response.data);
-
+                const detailMessage = error.response.data;
                 processErrorHandle(detailMessage.message);
             }
 
-            throw error;
+            return Promise.reject(error);
         }
     );
 
     return api;
 };
-
-
-
-
