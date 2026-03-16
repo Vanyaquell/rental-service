@@ -34,7 +34,19 @@ Offer.init({
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: false,
         validate: {
-            len: [6, 6]
+            isArrayOfStrings(value) {
+                if (!Array.isArray(value)) {
+                    throw new Error('Photos must be an array');
+                }
+                if (value.length === 0) {
+                    throw new Error('At least one photo is required');
+                }
+                for (const item of value) {
+                    if (typeof item !== 'string') {
+                        throw new Error('Each photo must be a string path');
+                    }
+                }
+            }
         }
     },
     isPremium: {

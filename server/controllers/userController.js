@@ -3,28 +3,30 @@ import ApiError from '../error/ApiError.js';
 import { User } from '../models/user.js';
 import jwt from 'jsonwebtoken';
 
-
 export const registration = async (req, res, next) => {
     try {
         const { email, password, userType, username } = req.body;
 
-
-        if (!email || !password) {
-            return next(ApiError.badRequest('Некорректный email или password'));
+        if (!email || !password || !userType || !username) {
+            return next(ApiError.badRequest('Все поля обязательны'));
         }
 
+        if (password.length < 6 || password.length > 12) {
+            return next(ApiError.badRequest('Пароль должен быть от 6 до 12 символов'));
+        }
 
         const candidate = await User.findOne({ where: { email } });
         if (candidate) {
             return next(ApiError.badRequest('Пользователь с таким email уже существует'));
         }
 
+        let avatarImage = '/static/default-avatar.png';
 
-        const avatarImage = `/static/${req.file.filename}`;
-
+        if (req.file) {
+            avatarImage = `/static/${req.file.filename}`;
+        }
 
         const hashPassword = await bcrypt.hash(password, 5);
-
 
         const user = await User.create({
             email,
@@ -33,7 +35,6 @@ export const registration = async (req, res, next) => {
             avatar: avatarImage,
             password: hashPassword
         });
-
 
         res.json({
             user: {
@@ -44,8 +45,17 @@ export const registration = async (req, res, next) => {
                 isPro: user.userType === 'pro'
             }
         });
+
     } catch (error) {
-        next(ApiError.internal('Ошибка регистрации'));
+        if (error.name === 'SequelizeValidationError') {
+            return next(ApiError.badRequest('Ошибка валидации: ' + error.errors.map(e => e.message).join(', ')));
+        }
+
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return next(ApiError.badRequest('Пользователь с таким email уже существует'));
+        }
+
+        next(ApiError.internal('Ошибка регистрации: ' + error.message));
     }
 };
 
@@ -53,17 +63,13 @@ const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-
         const user = await User.findOne({ where: { email } });
         if (!user) return next(ApiError.badRequest('Пользователь не найден'));
-
 
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) return next(ApiError.badRequest('Неверный пароль'));
 
-
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-
 
         res.json({ token });
     } catch (error) {
@@ -71,10 +77,8 @@ const login = async (req, res, next) => {
     }
 };
 
-
 const checkAuth = (req, res) => {
     const user = req.user;
-
 
     const token = jwt.sign(
         {
@@ -87,7 +91,6 @@ const checkAuth = (req, res) => {
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
     );
-
 
     return res.json({
         id: user.id,

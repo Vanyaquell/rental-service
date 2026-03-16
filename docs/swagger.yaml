@@ -1,0 +1,297 @@
+openapi: 3.0.0
+info:
+  title: Housing Rental API
+  version: 1.0.0
+  description: API для работы с предложениями, отзывами и пользователями
+servers:
+  - url: http://localhost:5000
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+  - name: Users
+  - name: Offers
+  - name: Reviews
+
+paths:
+  #  Пользователи
+  /register:
+    post:
+      summary: Регистрация нового пользователя
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [email, password, userType, username]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 6, maxLength: 12 }
+                userType: { type: string, enum: [normal, pro] }
+                username: { type: string, minLength: 1, maxLength: 15 }
+                avatar: { type: string, format: binary }
+            example:
+              email: "user@gmail.com"
+              password: "password123"
+              userType: "normal"
+              username: "john_doe"
+      responses:
+        "200":
+          description: Успешная регистрация
+        "400":
+          description: Ошибка валидации
+
+  /login:
+    post:
+      summary: Авторизация пользователя
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+            example:
+              email: Maggie13@gmail.com
+              password: ZtKoh1uOt3
+      responses:
+        "200":
+          description: Успешный логин, возвращает токен
+          content:
+            application/json:
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+  /logout:
+    delete:
+      summary: Выход из системы
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204":
+          description: Успешный выход (нет контента)
+        "401":
+          description: Не авторизован
+
+  #  Предложения
+  /offers:
+    get:
+      summary: Получение всех предложений
+      tags: [Offers]
+      responses:
+        "200":
+          description: Список всех предложений
+          content:
+            application/json:
+              example:
+                - id: 1
+                  title: "Уютная квартира в центре Парижа"
+                  type: "apartment"
+                  price: 200
+                  city:
+                    {
+                      name: "Paris",
+                      location: { latitude: 48.8566, longitude: 2.3522 },
+                    }
+                  location: { latitude: 48.8566, longitude: 2.3522 }
+                  isFavorite: true
+                  isPremium: true
+                  rating: 4.7
+                  previewImage: "/static/preview1.jpg"
+
+    post:
+      summary: Создание нового предложения
+      description: |
+        Создает новое предложение (offer). 
+        Принимает данные в формате multipart/form-data. 
+        Поле previewImage обязательно. 
+        Поле photos — массив из 6 файлов.
+      tags: [Offers]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                [title, description, city, price, rooms, guests, previewImage]
+              properties:
+                title: { type: string }
+                description: { type: string }
+                publishDate: { type: string, format: date }
+                city: { type: string }
+                isPremium: { type: boolean }
+                isFavorite: { type: boolean }
+                rating: { type: number }
+                type: { type: string, enum: [apartment, house, room, hotel] }
+                rooms: { type: integer }
+                guests: { type: integer }
+                price: { type: number }
+                features:
+                  { type: string, description: "JSON-строка массива удобств" }
+                commentsCount: { type: integer }
+                latitude: { type: number }
+                longitude: { type: number }
+                userId: { type: integer }
+                previewImage:
+                  {
+                    type: string,
+                    format: binary,
+                    description: Основное изображение (обязательно),
+                  }
+                photos:
+                  {
+                    type: array,
+                    items: { type: string, format: binary },
+                    description: Дополнительные изображения (6 файлов),
+                  }
+            examples:
+              generated:
+                summary: Сгенерированный пример (только текстовые поля)
+                value:
+                  title: "decor talis dolor"
+                  description: "Thorax carus dedico abbas explicabo tribuo sublime angulus virga."
+                  publishDate: "2026-03-15"
+                  city: "Paris"
+                  isPremium: true
+                  isFavorite: false
+                  rating: 4
+                  type: "apartment"
+                  rooms: 2
+                  guests: 3
+                  price: 473
+                  features: '["Breakfast","Air conditioning","Laptop friendly workspace","Baby seat","Washer","Towels","Fridge"]'
+                  commentsCount: 0
+                  latitude: 48.8566
+                  longitude: 2.3522
+                  userId: 1
+      responses:
+        "201":
+          description: Предложение успешно создано
+        "400":
+          description: Ошибка валидации данных
+        "401":
+          description: Не авторизован
+
+  /offers/{id}:
+    get:
+      summary: Получение полной информации о предложении
+      tags: [Offers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+          description: ID предложения
+      responses:
+        "200":
+          description: Полная информация о предложении
+        "404":
+          description: Предложение не найдено
+
+  /favorite:
+    get:
+      summary: Получение избранных предложений
+      tags: [Offers]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Список избранных предложений
+
+  /favorite/{offerId}/{status}:
+    post:
+      summary: Добавление/удаление предложения в избранное
+      tags: [Offers]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema: { type: integer }
+          description: ID предложения
+        - name: status
+          in: path
+          required: true
+          schema: { type: integer, enum: [0, 1] }
+          description: "1 - добавить в избранное, 0 - удалить из избранного"
+      responses:
+        "200":
+          description: Статус избранного обновлен
+        "401":
+          description: Не авторизован
+        "404":
+          description: Предложение не найдено
+
+  #  Комменты
+  /comments/{offerId}:
+    get:
+      summary: Получение комментариев к предложению
+      tags: [Reviews]
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema: { type: integer }
+          description: ID предложения
+      responses:
+        "200":
+          description: Список комментариев
+          content:
+            application/json:
+              example:
+                - id: 1
+                  text: "Прекрасное место, очень понравилось!"
+                  rating: 5
+                  publishDate: "2026-03-15"
+                  author:
+                    {
+                      id: 2,
+                      name: "Anna",
+                      avatarUrl: "/static/avatar2.jpg",
+                      isPro: true,
+                    }
+
+    post:
+      summary: Добавление комментария к предложению
+      tags: [Reviews]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema: { type: integer }
+          description: ID предложения
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [comment, rating]
+              properties:
+                comment: { type: string, minLength: 5, maxLength: 1024 }
+                rating: { type: integer, minimum: 1, maximum: 5 }
+            examples:
+              generated:
+                summary: Пример добавления комментария
+                value:
+                  comment: "Отличное жилье, чисто, уютно, все понравилось!"
+                  rating: 5
+      responses:
+        "201":
+          description: Комментарий успешно добавлен
+        "400":
+          description: Ошибка валидации
+        "401":
+          description: Не авторизован
+        "404":
+          description: Предложение не найдено

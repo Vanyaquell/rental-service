@@ -5,6 +5,15 @@
     "http-status-code": "^2.1.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
-    "uuid": "^13.0.0"
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^10.3.0",
+    "yaml": "^2.8.2"
+  },
+  "scripts": {
+    "swagger:gen-examples": "node scripts/gen-swagger-examples.js"
   }
 }
