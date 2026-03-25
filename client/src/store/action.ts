@@ -45,5 +45,5 @@ export {
     setCurrentOfferReviews,
     setCurrentOfferLoadingStatus,
     setCurrentOfferError,
-    setServerUnavailable
+    setServerUnavailable,
 };
