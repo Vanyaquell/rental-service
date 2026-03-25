@@ -1,5 +1,5 @@
 import { createReducer } from '@reduxjs/toolkit';
-import { changeCity, offersCityList, requireAuthorization, setError, setOffersDataLoadingStatus, setUserEmail, setCurrentOffer, setCurrentOfferReviews, setCurrentOfferLoadingStatus, setCurrentOfferError } from './action';
+import { changeCity, offersCityList, requireAuthorization, setError, setOffersDataLoadingStatus, setUserEmail, setCurrentOffer, setCurrentOfferReviews, setCurrentOfferLoadingStatus, setCurrentOfferError, setServerUnavailable } from './action';
 import { AuthorizationStatus, CITIES_LOCATION } from "../const";
 import { getCity } from "../util";
 import type { City } from '../types/city';
@@ -8,7 +8,7 @@ import type { FullOffer } from '../types/offers';
 import type { ReviewType } from '../types/reviews';
 import type { AuthorizationStatusType } from '../types/authorization-status';
 
-const defaultCity = getCity('Paris', CITIES_LOCATION);
+const DEFAULT_CITY = CITIES_LOCATION[0];
 
 const token = localStorage.getItem('rent-service-token');
 const initialAuthStatus = token
@@ -26,10 +26,11 @@ export type InitialState = {
     currentOfferReviews: ReviewType[];
     isCurrentOfferLoading: boolean;
     currentOfferError: string | null;
+    isServerUnavailable: boolean; // Новое состояние
 }
 
 const initialState: InitialState = {
-    city: defaultCity,
+    city: DEFAULT_CITY,
     offers: [],
     authorizationStatus: initialAuthStatus,
     error: null,
@@ -39,6 +40,7 @@ const initialState: InitialState = {
     currentOfferReviews: [],
     isCurrentOfferLoading: false,
     currentOfferError: null,
+    isServerUnavailable: false, // Инициализируем
 };
 
 const reducer = createReducer(initialState, (builder) => {
@@ -48,6 +50,7 @@ const reducer = createReducer(initialState, (builder) => {
         })
         .addCase(offersCityList, (state, action) => {
             state.offers = action.payload;
+            state.isServerUnavailable = false; // Сброс ошибки при успешной загрузке
         })
         .addCase(requireAuthorization, (state, action) => {
             state.authorizationStatus = action.payload;
@@ -72,6 +75,12 @@ const reducer = createReducer(initialState, (builder) => {
         })
         .addCase(setCurrentOfferError, (state, action) => {
             state.currentOfferError = action.payload;
+        })
+        .addCase(setServerUnavailable, (state, action) => {
+            state.isServerUnavailable = action.payload;
+            if (action.payload) {
+                state.isOffersDataLoading = false;
+            }
         });
 });
 

@@ -32,6 +32,8 @@ const setCurrentOfferLoadingStatus = createAction<boolean>('offer/setCurrentOffe
 
 const setCurrentOfferError = createAction<string | null>('offer/setCurrentOfferError');
 
+const setServerUnavailable = createAction<boolean>('data/setServerUnavailable');
+
 export {
     changeCity,
     offersCityList,
@@ -42,5 +44,6 @@ export {
     setCurrentOffer,
     setCurrentOfferReviews,
     setCurrentOfferLoadingStatus,
-    setCurrentOfferError
+    setCurrentOfferError,
+    setServerUnavailable
 };

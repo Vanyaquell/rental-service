@@ -11,14 +11,16 @@ import {
     setCurrentOffer,
     setCurrentOfferReviews,
     setCurrentOfferLoadingStatus,
-    setCurrentOfferError
+    setCurrentOfferError,
+    setServerUnavailable
 } from './action';
 import { saveToken, dropToken } from '../services/token';
-import { APIRoute, AuthorizationStatus } from '../const';
+import { APIRoute, AuthorizationStatus, TIMEOUT_SHOW_ERROR } from '../const';
 import type { AuthData, UserData } from '../types/user-data';
-import { TIMEOUT_SHOW_ERROR } from '../const';
 import { setError } from './action';
 import { store } from './index';
+
+const SERVER_TIMEOUT = 2000;
 
 export const fetchOffersAction = createAsyncThunk<void, undefined, {
     dispatch: AppDispatch;
@@ -28,9 +30,24 @@ export const fetchOffersAction = createAsyncThunk<void, undefined, {
     'data/fetchOffers',
     async (_arg, { dispatch, extra: api }) => {
         dispatch(setOffersDataLoadingStatus(true));
-        const { data } = await api.get<OffersList[]>(APIRoute.Offers);
-        dispatch(setOffersDataLoadingStatus(false));
-        dispatch(offersCityList(data));
+        dispatch(setServerUnavailable(false));
+
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Server timeout')), SERVER_TIMEOUT);
+        });
+
+        const requestPromise = api.get<OffersList[]>(APIRoute.Offers);
+
+        try {
+            const { data } = await Promise.race([requestPromise, timeoutPromise]) as { data: OffersList[] };
+            dispatch(setOffersDataLoadingStatus(false));
+            dispatch(offersCityList(data));
+        } catch (error) {
+            console.error('Failed to fetch offers:', error);
+            dispatch(setOffersDataLoadingStatus(false));
+            dispatch(setServerUnavailable(true));
+            dispatch(setError('Сервер недоступен'));
+        }
     },
 );
 
@@ -184,6 +201,7 @@ export const clearErrorAction = createAsyncThunk(
         );
     },
 );
+
 export const toggleFavoriteAction = createAsyncThunk<
     void,
     { offerId: string; status: number },
