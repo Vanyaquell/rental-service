@@ -1,0 +1,37 @@
+.favorites__card .place-card__bookmark-button {
+    flex-shrink: 0;
+    width: 18px;
+    height: 19px;
+    margin-top: 2px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: none !important;
+    -webkit-transform: none !important;
+}
+
+.favorites__card .place-card__bookmark-button:hover {
+    opacity: 0.7;
+}
+
+.favorites__card .place-card__bookmark-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.favorites__card .place-card__bookmark-icon {
+    fill: none;
+    stroke: #979797;
+    stroke-width: 2;
+    transition: fill 0.3s, stroke 0.3s;
+}
+
+.favorites__card .place-card__bookmark-button--active .place-card__bookmark-icon {
+    fill: #4481c3;
+    stroke: #4481c3;
+}

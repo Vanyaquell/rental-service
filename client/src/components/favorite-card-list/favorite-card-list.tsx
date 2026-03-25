@@ -6,9 +6,10 @@ import { AppRoute } from "../../const";
 
 type FavoritesCardListProps = {
     offersList: OffersList[];
+    onRemove?: () => void;
 };
 
-function FavoritesCardList({ offersList }: FavoritesCardListProps) {
+function FavoritesCardList({ offersList, onRemove }: FavoritesCardListProps) {
     const [favoriteOffers, setFavoriteOffers] = useState<OffersList[]>([]);
 
     useEffect(() => {
@@ -17,39 +18,13 @@ function FavoritesCardList({ offersList }: FavoritesCardListProps) {
 
     const handleRemoveOffer = (offerId: string) => {
         setFavoriteOffers(prev => prev.filter(offer => offer.id !== offerId));
+        if (onRemove) {
+            onRemove();
+        }
     };
 
     if (favoriteOffers.length === 0) {
-        return (
-            <div className="favorites__empty" style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '400px',
-                textAlign: 'center',
-                padding: '40px 20px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '8px'
-            }}>
-                <h2 style={{
-                    fontSize: '32px',
-                    fontWeight: 'bold',
-                    color: '#000000',
-                    marginBottom: '16px'
-                }}>
-                    Nothing yet saved.
-                </h2>
-                <p style={{
-                    fontSize: '18px',
-                    color: '#6c757d',
-                    marginBottom: '8px',
-                    lineHeight: '1.5'
-                }}>
-                    Save properties to narrow down search or plan your future trips.
-                </p>
-            </div>
-        );
+        return null;
     }
 
     const offersByCity = favoriteOffers.reduce<Record<string, OffersList[]>>((acc, offer) => {
@@ -67,9 +42,9 @@ function FavoritesCardList({ offersList }: FavoritesCardListProps) {
                 <li key={cityName} className="favorites__locations-items">
                     <div className="favorites__locations locations locations--current">
                         <div className="locations__item">
-                            <a className="locations__item-link" href="#">
+                            <Link className="locations__item-link" to={AppRoute.Main}>
                                 <span>{cityName}</span>
-                            </a>
+                            </Link>
                         </div>
                     </div>
                     <div className="favorites__places">

@@ -5,7 +5,7 @@ import { useAppSelector, useAppDispatch } from "../../hooks";
 import { logoutAction } from "../../store/api-action";
 import { Link } from "react-router-dom";
 import { AppRoute, AuthorizationStatus } from "../../const";
-import "./favorites-page.css";
+import { fetchOffersAction } from "../../store/api-action";
 
 type FavoritePageProps = { offersList: OffersList[] }
 
@@ -19,6 +19,10 @@ function FavoritesPages({ offersList }: FavoritePageProps) {
 
     const handleLogout = () => {
         dispatch(logoutAction());
+    };
+
+    const handleRemoveFromFavorites = () => {
+        dispatch(fetchOffersAction());
     };
 
     const pageClass = favoriteCount === 0
@@ -49,7 +53,7 @@ function FavoritesPages({ offersList }: FavoritePageProps) {
                                                 <div className="header__avatar-wrapper user__avatar-wrapper">
                                                 </div>
                                                 <span className="header__user-name user__name">
-                                                    {userEmail}
+                                                    {userEmail || 'user@example.com'}
                                                 </span>
                                                 <span className="header__favorite-count">{favoriteCount}</span>
                                             </Link>
@@ -100,7 +104,10 @@ function FavoritesPages({ offersList }: FavoritePageProps) {
                     ) : (
                         <section className="favorites">
                             <h1 className="favorites__title">Saved listing</h1>
-                            <FavoritesCardList offersList={offersList} />
+                            <FavoritesCardList
+                                offersList={offersList}
+                                onRemove={handleRemoveFromFavorites}
+                            />
                         </section>
                     )}
                 </div>
